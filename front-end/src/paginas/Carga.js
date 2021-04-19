@@ -1,15 +1,21 @@
 import React, { Component } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import '../css/Admin.css'
+import {useState} from 'react'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import axios from 'axios'
 
-export default class Admin extends Component {
-
-    handleDateClick = (arg) => { // bind with an arrow function
-        alert(arg.dateStr)
-      }
-
+export default class Carga extends Component {
     render() {
+        var openFile = function(evt) { 
+            let status = [];
+            const fileObj = evt.target.files[0];
+            const reader = new FileReader(); 
+            let fileloaded = e => {
+              console.log(e.target.result)
+            }
+            fileloaded = fileloaded.bind(this);
+            reader.onload = fileloaded;
+            reader.readAsText(fileObj);
+        };
         return (
             <div>
                 <div id="barra">
@@ -42,31 +48,20 @@ export default class Admin extends Component {
                     </div>
                     </nav>
                 </div>
-                
-               
-
-                <div id="Calendario">
-                    <button type="button" class="btn btn-outline-secondary">Evento</button>
-                    <FullCalendar
-                        plugins={[ dayGridPlugin ]}
-                        initialView="dayGridMonth"
-                        events={[
-                            { title: 'event 1', date: '2021-04-01' },
-                            { title: 'event 2', date: '2021-04-02' }
-                          ]}
-                    />
+                <div id='Carga'>
+                    <br/><br/>
+                    <input type='file' name='Archivo' onChange= {evt => openFile(evt)}/>
+                    <br/><br/>
+                    <button className="btn btn-primary"  >Cargar Archivo</button>
                 </div>
+
+                
             </div>
         )
     }
+
+    
 }
 
 
-function renderEventContent(eventInfo) {
-    return (
-      <>
-        <b>{eventInfo.timeText}</b>
-        <i>{eventInfo.event.title}</i>
-      </>
-    )
-  }
+  
