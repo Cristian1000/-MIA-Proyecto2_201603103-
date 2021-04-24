@@ -1,6 +1,10 @@
 import React, { Component } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from '@fullcalendar/list';
+import time from '@fullcalendar/timegrid';
+import moment from 'moment'
 import '../css/Admin.css'
 
 export default class Admin extends Component {
@@ -8,6 +12,8 @@ export default class Admin extends Component {
     handleDateClick = (arg) => { // bind with an arrow function
         alert(arg.dateStr)
       }
+
+    
 
     render() {
         return (
@@ -42,31 +48,55 @@ export default class Admin extends Component {
                     </div>
                     </nav>
                 </div>
-                
-               
-
                 <div id="Calendario">
-                    <button type="button" class="btn btn-outline-secondary">Evento</button>
+                    <br/> <br/>
                     <FullCalendar
-                        plugins={[ dayGridPlugin ]}
+                        plugins={[ dayGridPlugin, listPlugin, time]}
                         initialView="dayGridMonth"
+                        headerToolbar={{
+                            left: 'dayGridMonth,timeGridWeek,listYear',
+                            center: 'addEventButton',
+                            right: 'prevYear,prev,next,nextYear'
+                        }}
+                        locale = {'es'}
+                        customButtons = {{
+                            addEventButton : {
+                              text: 'Agregar Evento',
+                              click: function() {
+                                var dateStr = prompt('Enter a date in YYYY-MM-DD format');
+                                var date = moment(dateStr);
+                      
+                                if (date.isValid()) {
+                                    /*renderEvent = info => {
+                                        var tooltip = new Tooltip(info.el, {
+                                            title: 'dynamic event',
+                                            start: date,
+                                            allDay: true
+                                        });
+                                      }*/
+                                      window.location.replace('');
+                                  alert('Great. Now, update your database...');
+                                } else {
+                                  alert('Invalid date.');
+                                }
+                              }
+                            }
+                          }}
                         events={[
-                            { title: 'event 1', date: '2021-04-01' },
-                            { title: 'event 2', date: '2021-04-02' }
-                          ]}
+                        { title: 'event 1', date: '2021-04-13 08:30' },
+                        { title: 'event 2', date: '2021-04-15' },
+                        { title: 'event 2', date: '2021-04-15' },
+                        { title: 'event 2', date: '2021-04-15' },
+                        { title: 'event 2', date: '2021-04-15' },
+                        { title: 'event 2', date: '2021-04-15' },
+                        { title: 'event 2', date: '2021-04-15' }
+                        ]}
                     />
                 </div>
+                
             </div>
         )
     }
 }
 
 
-function renderEventContent(eventInfo) {
-    return (
-      <>
-        <b>{eventInfo.timeText}</b>
-        <i>{eventInfo.event.title}</i>
-      </>
-    )
-  }
