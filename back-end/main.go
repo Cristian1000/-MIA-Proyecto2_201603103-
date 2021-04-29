@@ -3,16 +3,35 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
 	"strconv"
 
 	_ "github.com/godror/godror"
+	"github.com/gorilla/mux"
 )
 
+func indexRoute(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, conexion())
+}
+
 func main() {
-	//Oracle 12c
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/", indexRoute)
+	log.Fatal(http.ListenAndServe(":3003", router))
+}
+
+/*
+import (
+	"database/sql"
+	"fmt"
+	"strconv"
+
+	_ "github.com/godror/godror"
+)*/
+
+func conexion() (consulta string) {
 	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
-	//Oracle 18c
-	// db, err := sql.Open("godror", "user/password@localhost:1521/ORCL18.localdomain")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -31,11 +50,11 @@ func main() {
 
 	var x int
 	var id string
+	var cunsulta string
 	for rows.Next() {
-
 		rows.Scan(&x, &id)
-
-		fmt.Printf(strconv.Itoa(x)+" %s", id)
-		fmt.Printf("\n")
+		cunsulta = fmt.Sprintf("%s%s%s", strconv.Itoa(x), ",", id)
 	}
+
+	return cunsulta
 }
