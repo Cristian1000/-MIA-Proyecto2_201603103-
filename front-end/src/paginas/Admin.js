@@ -83,7 +83,7 @@ export default class Admin extends Component {
                             }
                           }}
                         events={[
-                        { title: 'event 1', date: '2021-04-13 08:30' },
+                        { title: 'event 1', date: '2021-04-13 08:30', color:'orange'},
                         { title: 'event 2', date: '2021-04-15' },
                         { title: 'event 2', date: '2021-04-15' },
                         { title: 'event 2', date: '2021-04-15' },

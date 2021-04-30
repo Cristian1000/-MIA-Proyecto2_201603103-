@@ -4,18 +4,36 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import axios from 'axios'
 
 export default class Carga extends Component {
+
     render() {
+
+        var ArchivoYaml = "";
+
         var openFile = function(evt) { 
             let status = [];
             const fileObj = evt.target.files[0];
             const reader = new FileReader(); 
             let fileloaded = e => {
-              console.log(e.target.result)
+                ArchivoYaml = e.target.result;
+              console.log(e.target.result);
             }
             fileloaded = fileloaded.bind(this);
             reader.onload = fileloaded;
             reader.readAsText(fileObj);
         };
+
+        var Enviar = function(){
+            var url = 'http://localhost:3003/Carga';
+            var dato = JSON.stringify({Texto:ArchivoYaml})
+            axios.post(url, dato).then(
+                result => {
+                    console.log("Se envio la informacion");
+                }
+            ).catch(console.log)
+        }
+
+        
+
         return (
             <div>
                 <div id="barra">
@@ -52,7 +70,7 @@ export default class Carga extends Component {
                     <br/><br/>
                     <input type='file' name='Archivo' onChange= {evt => openFile(evt)}/>
                     <br/><br/>
-                    <button className="btn btn-primary"  >Cargar Archivo</button>
+                    <button className="btn btn-primary" onClick={Enviar}  >Cargar Archivo</button>
                 </div>
 
                 
