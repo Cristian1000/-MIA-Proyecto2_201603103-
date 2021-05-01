@@ -8,5 +8,6 @@ require (
 	github.com/githubnemo/CompileDaemon v1.2.1 // indirect
 	github.com/godror/godror v0.24.4
 	github.com/gorilla/mux v1.8.0
+	github.com/rs/cors v1.7.0
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

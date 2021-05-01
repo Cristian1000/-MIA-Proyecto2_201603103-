@@ -24,10 +24,14 @@ export default class Carga extends Component {
 
         var Enviar = function(){
             var url = 'http://localhost:3003/Carga';
-            var dato = JSON.stringify({Texto:ArchivoYaml})
+            const yaml = require('js-yaml')
+            const obj = yaml.load(ArchivoYaml)
+            //alert(JSON.stringify(obj, null, 2))
+            var dato = JSON.stringify(obj, null, 2)
             axios.post(url, dato).then(
                 result => {
                     console.log("Se envio la informacion");
+                    //console.log(dato)
                 }
             ).catch(console.log)
         }
