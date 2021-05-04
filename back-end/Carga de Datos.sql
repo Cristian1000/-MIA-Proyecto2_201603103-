@@ -3,7 +3,6 @@ AS
 BEGIN
             INSERT INTO CLIENTE (NOMBRE,APELLIDO, PASSWORD, USUARIO)
             VALUES (nombreE, apellidoE,passE,usernameE);
-        
 END;
 
 CREATE OR REPLACE PROCEDURE Ingresar_Deporte (nombreE in VARCHAR2)
@@ -27,7 +26,7 @@ BEGIN
         VALUES (nombreE);
 END;
 
-CREATE OR REPLACE PROCEDURE Ingresar_Evento (nombreL in VARCHAR2, nombreV in VARCHAR2, resultadoL in INTEGER, resultadoV in INTEGER, fecha in DATE, deporte in VARCHAR2, jornada in VARCHAR2)
+CREATE OR REPLACE PROCEDURE Ingresar_Evento (nombreL in VARCHAR2, nombreV in VARCHAR2, resultadoL in INTEGER, resultadoV in INTEGER, fecha in VARCHAR2, deporte in VARCHAR2, jornada in VARCHAR2, temporadaE in INTEGER)
 AS
 BEGIN
         INSERT INTO EVENTO (NOMBRE_LOCAL, NOMBRE_VISITANTE, R_LOCAL, R_VISITANTE, FECHA, ID_DEPORTE, ID_JORNADA)
@@ -35,19 +34,19 @@ BEGIN
         nombreV,
         resultadoL,
         resultadoV,
-        fecha,
+        TO_DATE(fecha, 'DD-MM-YYYY HH:MI'),
         (select DEPORTE.ID from DEPORTE where DEPORTE.NOMBRE = deporte),
-        (SELECT JORNADA.ID from JORNADA where JORNADA.NOMBRE = jornada)
+        (SELECT JORNADA.ID from JORNADA where JORNADA.NOMBRE = jornada AND JORNADA.ID_TEMPORADA = temporadaE)
         );
 END;
 
-CREATE OR REPLACE PROCEDURE Ingresar_Jornada (nombreE in VARCHAR2, fecha_i in DATE, fecha_f in DATE, temporadaE in VARCHAR2, faseE in VARCHAR2)
+CREATE OR REPLACE PROCEDURE Ingresar_Jornada (nombreE in VARCHAR2, fecha_i in VARCHAR2, fecha_f in VARCHAR2, temporadaE in VARCHAR2, faseE in VARCHAR2)
 AS
 BEGIN
         INSERT INTO JORNADA (NOMBRE, FECHA_INICIO, FECHA_FIN, ID_TEMPORADA, ID_FASE)
         VALUES (nombreE, 
-        fecha_i,
-        fecha_f,
+        TO_DATE(fecha_i, 'DD-MM-YYYY HH:MI'),
+        TO_DATE(fecha_f, 'DD-MM-YYYY HH:MI'),
         (SELECT TEMPORADA.ID from TEMPORADA where TEMPORADA.NOMBRE = temporadaE),
         (select FASE.ID from FASE WHERE FASE.NOMBRE = faseE)
         );
@@ -85,13 +84,29 @@ BEGIN
         );
 END;
 
-EXECUTE Ingresar_Cliente('jose', 'ra', '1234', 'car');
+CALL Ingresar_Cliente('jose', 'ra', '1234', 'car');
 
-select * from CLIENTE
+select usuario from CLIENTE WHERE USUARIO = ;
+
+SELECT * from TEMPORADA
+SELECT * FROM JORNADA 
 
 select object_type,count(*) from user_objects where status = 'INVALID' 
 group by object_type;
 
 drop PROCEDURE Ingresar_Cliente;
 
-SELECT ID from EVENTO where EVENTO.NOMBRE_LOCAL = 'dd' and EVENTO.NOMBRE_VISITANTE = '33' and EVENTO.FECHA = 'dsdd'
+SELECT * from DEPORTE;
+SELECT * FROM EVENTO
+
+
+
+
+DELETE FROM EVENTO;
+DELETE FROM JORNADA;
+DELETE FROM MEMBRESIA_TEMPORADA;
+DELETE FROM PREDICCION;
+DELETE FROM TEMPORADA;
+DELETE FROM CLIENTE;
+DELETE FROM MEMBRESIA;
+DELETE FROM DEPORTE;

@@ -184,7 +184,9 @@ VALUES
   'Finalizada'
 );
 
-SELECT ID, NOMBRE, CONTRASEÑA FROM cliente
+SELECT ID, NOMBRE, PASSWORD FROM cliente
+
+SELECT * from FASE;
 
 -- Insert rows in a Table
 
@@ -192,13 +194,15 @@ INSERT INTO cliente
 (
   NOMBRE,
   APELLIDO,
-  CONTRASEÑA
+  PASSWORD,
+  USUARIO
 )
 VALUES
 (
   'Cris',
   'Vicente',
-  '123'
+  '123',
+  'cristian'
 );
 
 -- Delete rows from a Table
