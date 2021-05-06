@@ -4,18 +4,45 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from '@fullcalendar/list';
 import time from '@fullcalendar/timegrid';
-import moment from 'moment'
-import '../css/Admin.css'
+import moment from 'moment';
+import '../css/Admin.css';
+import axios from 'axios';
 
 export default class Admin extends Component {
-
-    handleDateClick = (arg) => { // bind with an arrow function
-        alert(arg.dateStr)
-      }
-
     
 
+    async componentDidMount() {
+        await axios
+        .get("http://localhost:3003/Eventos")
+        .then(response => {
+        response.data.forEach(element => {
+          //this.fixEvent(element.id, element.local, element.visita, element.m_local, element.m_visita, element.fecha_inicio, element.fecha_final);
+          this.state2.Events.push(element)
+          
+          
+        });
+        //console.log(this.state2.Events)
+        this.setState({
+          calendarEvents: this.state2.Events
+        })
+      });
+    }
+
+    state2 = {
+        Events: []
+      }
+
+    state = {
+        calendarWeekends: true,
+        calendarEvents: [
+            {title: "Research and Development vs Business Development", start: "2018/04/26 09:32"},
+            { title: 'event 2', date: '2021-04-02' }
+        ]
+      };
+  
+
     render() {
+
         return (
             <div>
                 <div id="barra">
@@ -29,8 +56,8 @@ export default class Admin extends Component {
                         <li className="nav-item active">
                             <a className="nav-link" href="#">Carga Masiva <span className="sr-only">(current)</span></a>
                         </li>
-                        <li className="nav-item">
-                            <a className="nav-link" href="#">Jornada </a>
+                        <li className="nav-item active">
+                            <a className="nav-link" href="#"  >Jornada </a>
                         </li>
                         <li className="nav-item active">
                             <a className="nav-link" href="#">Temporada </a>
@@ -55,42 +82,12 @@ export default class Admin extends Component {
                         initialView="dayGridMonth"
                         headerToolbar={{
                             left: 'dayGridMonth,timeGridWeek,listYear',
-                            center: 'addEventButton',
+                            center: 'title,today',
                             right: 'prevYear,prev,next,nextYear'
                         }}
                         locale = {'es'}
-                        customButtons = {{
-                            addEventButton : {
-                              text: 'Agregar Evento',
-                              click: function() {
-                                var dateStr = prompt('Enter a date in YYYY-MM-DD format');
-                                var date = moment(dateStr);
-                      
-                                if (date.isValid()) {
-                                    /*renderEvent = info => {
-                                        var tooltip = new Tooltip(info.el, {
-                                            title: 'dynamic event',
-                                            start: date,
-                                            allDay: true
-                                        });
-                                      }*/
-                                      window.location.replace('');
-                                  alert('Great. Now, update your database...');
-                                } else {
-                                  alert('Invalid date.');
-                                }
-                              }
-                            }
-                          }}
-                        events={[
-                        { title: 'event 1', date: '2021-04-13 08:30', color:'orange'},
-                        { title: 'event 2', date: '2021-04-15' },
-                        { title: 'event 2', date: '2021-04-15' },
-                        { title: 'event 2', date: '2021-04-15' },
-                        { title: 'event 2', date: '2021-04-15' },
-                        { title: 'event 2', date: '2021-04-15' },
-                        { title: 'event 2', date: '2021-04-15' }
-                        ]}
+                        //initialEvents = {this.Ingresar_eventos()}
+                        events={this.state.calendarEvents}
                     />
                 </div>
                 

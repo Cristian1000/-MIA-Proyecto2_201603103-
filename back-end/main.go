@@ -53,20 +53,23 @@ type Usuario struct {
 
 type Info map[string]Usuario
 
+type Retorno struct {
+	Eventos []Dentro `json:"Eventos"`
+}
+type Dentro struct {
+	Title string `json:"title"`
+	Start string `json:"start"`
+}
+
+type Contiene map[string]Retorno
+
 func indexRoute(w http.ResponseWriter, r *http.Request) {
 	//retornar_Evento("hola", "adios", "03/02/2019 11:29")
 	//valida_Usuario("Cris10")
 	//validar_Deporte("golf")
-	fmt.Println(retornar_Evento("Kermit Garbar", "Sarge Rowlings", "05/03/2018 11:58"))
+	fmt.Println(validar_Jornada("dd", "ddd"))
 	fmt.Fprint(w, conexion())
 }
-
-/*
-func setupCORS(w *http.ResponseWriter, req *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-}*/
 
 func CargaMasiva(w http.ResponseWriter, r *http.Request) {
 
@@ -98,7 +101,10 @@ func CargaMasiva(w http.ResponseWriter, r *http.Request) {
 			ingrrsar_Membresia_Temp(cliente, element.Tier, element.Temporada)
 			for _, element := range element.Jornadas {
 				jornada = element.Jornada
-				ingresar_Jornada(element.Jornada, "03/02/2019 11:29", "03/02/2019 11:29", temporada, "Finalizada")
+				retornarJornada := validar_Jornada(jornada, temporada)
+				if retornarJornada == "" {
+					ingresar_Jornada(element.Jornada, "03/02/2019 11:29", "03/02/2019 11:29", temporada, "Finalizada")
+				}
 				for _, element := range element.Evento {
 
 					//var evento string
@@ -107,30 +113,27 @@ func CargaMasiva(w http.ResponseWriter, r *http.Request) {
 						ingresar_Deporte(element.Deporte)
 					}
 					retornoTem := retornar_Temporada(temporada)
-					ingresar_Evento(element.Local, element.Visitante, strconv.Itoa(element.Resultado.Local), strconv.Itoa(element.Resultado.Visitante), element.Fecha, element.Deporte, jornada, retornoTem)
+					validEvento := validar_Evento(element.Local, element.Visitante, element.Fecha)
+					if validEvento == "" {
+						ingresar_Evento(element.Local, element.Visitante, strconv.Itoa(element.Resultado.Local), strconv.Itoa(element.Resultado.Visitante), element.Fecha, element.Deporte, jornada, retornoTem)
+					}
 					evento := retornar_Evento(element.Local, element.Visitante, element.Fecha)
-					ingresar_Prediccion(strconv.Itoa(element.Prediccion.Local), strconv.Itoa(element.Prediccion.Visitante), cliente, evento)
+					validPrediccion := validar_Prediccion(cliente, element.Fecha)
+					if validPrediccion == "" {
+						ingresar_Prediccion(strconv.Itoa(element.Prediccion.Local), strconv.Itoa(element.Prediccion.Visitante), cliente, evento)
+					}
 				}
 			}
 		}
 	}
 
-	/*(w).Header().Set("Access-Control-Allow-Origin", "*")
-	(w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	var newTask Usuario
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Fprintf(w, "Insert a Valid Task Data")
-	}
+}
 
-	json.Unmarshal(reqBody, &newTask)
-
-	fmt.Println(newTask)
-
+func Enviar_Evento(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newTask)*/
+	//var nuevoRetorno Retorno
+
+	json.NewEncoder(w).Encode(Buscar_evento().Eventos)
 }
 
 func main() {
@@ -138,6 +141,7 @@ func main() {
 
 	router.HandleFunc("/", indexRoute)
 	router.HandleFunc("/Carga", CargaMasiva).Methods("POST")
+	router.HandleFunc("/Eventos", Enviar_Evento).Methods("GET")
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":3003", handler))
@@ -151,8 +155,6 @@ import (
 
 	_ "github.com/godror/godror"
 )*/
-
-//Peticiones a Oracle
 
 func conexion() (consulta string) {
 	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
@@ -525,4 +527,136 @@ func validar_Deporte(nombre string) (consulta string) {
 	}
 	fmt.Println(x)
 	return consulta
+}
+
+func validar_Jornada(nombre string, temporada string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT jornada.NOMBRE FROM JORNADA, TEMPORADA WHERE jornada.NOMBRE = :1 and TEMPORADA.ID = JORNADA.ID_TEMPORADA and TEMPORADA.NOMBRE = :2`,
+		nombre, temporada)
+
+	if err != nil {
+		fmt.Println("Validar jornada")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x string
+	for rows.Next() {
+		rows.Scan(&x)
+		consulta = x
+	}
+	fmt.Println(x)
+	return consulta
+}
+
+func validar_Evento(nombreL string, nombreV string, fecha string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT NOMBRE_LOCAL FROM EVENTO WHERE NOMBRE_LOCAL = :1 and NOMBRE_VISITANTE = :2 and to_char(fecha,'DD/MM/YYYY HH24:MI') = :3`,
+		nombreL, nombreV, fecha)
+
+	if err != nil {
+		fmt.Println("Validar jornada")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x string
+	for rows.Next() {
+		rows.Scan(&x)
+		consulta = x
+	}
+	fmt.Println(x)
+	return consulta
+}
+
+func validar_Prediccion(nombre string, fecha string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT PREDICCION.ID FROM PREDICCION, CLIENTE, EVENTO WHERE CLIENTE.ID = PREDICCION.ID_CLIENTE and EVENTO.ID = PREDICCION.ID_CLIENTE and CLIENTE.USUARIO = :1 and TO_CHAR(evento.FECHA,'DD/MM/YYYY HH24:MI') = :2`,
+		nombre, fecha)
+
+	if err != nil {
+		fmt.Println("Validar jornada")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x string
+	for rows.Next() {
+		rows.Scan(&x)
+		consulta = x
+	}
+	fmt.Println(x)
+	return consulta
+}
+
+type Eventos []Dentro
+
+func Buscar_evento() (consulta Retorno) {
+	//var EventosCargados = Eventos{}
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT NOMBRE_LOCAL, NOMBRE_VISITANTE, TO_CHAR(FECHA,'YYYY-MM-DD HH24:MI') FROM EVENTO`)
+
+	if err != nil {
+		fmt.Println("Validar jornada")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+	var retorno Retorno
+	var local string
+	var visitante string
+	var fecha string
+	//var captura string
+	//layout := "2006-01-02T15:04:05.000Z"
+	for rows.Next() {
+		rows.Scan(&local, &visitante, &fecha)
+		//captura := `{ "title":"` + local + ` vs ` + visitante + `", "start":` + fecha + `}`
+
+		var dento Dentro
+		dento.Title = local + " vs " + visitante
+
+		//fmt.Println(t)
+		dento.Start = fecha
+
+		//json.Unmarshal([]byte(captura), &dento)
+
+		retorno.Eventos = append(retorno.Eventos, dento)
+	}
+
+	return retorno
 }

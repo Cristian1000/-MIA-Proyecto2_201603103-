@@ -3,10 +3,14 @@
 CREATE TABLE Cliente 
 (
   id INTEGER NOT NULL,
-  nombre VARCHAR2(25) NOT NULL,
-  apellido VARCHAR2(25),
-  password VARCHAR2(25),
-  USUARIO VARCHAR2(25)
+  nombre VARCHAR2(150) NOT NULL,
+  apellido VARCHAR2(150),
+  password VARCHAR2(50),
+  USUARIO VARCHAR2(150),
+  fecha_nacimiento date,
+  fecha_registro date,
+  correo varchar2(200),
+  foto varchar2(500)
 );
 
 ALTER TABLE Cliente ADD CONSTRAINT cliente_pk PRIMARY KEY ( id );
@@ -17,7 +21,7 @@ ALTER TABLE Cliente ADD CONSTRAINT cliente_pk PRIMARY KEY ( id );
 CREATE TABLE Temporada 
 (
   id INTEGER NOT NULL,
-  nombre VARCHAR2(65),
+  nombre VARCHAR2(150),
   fecha_inicio DATE,
   fecha_fin DATE
 );
@@ -29,7 +33,7 @@ ALTER TABLE Temporada ADD CONSTRAINT temporada_pk PRIMARY KEY ( id );
 CREATE TABLE Fase 
 (
   id INTEGER NOT NULL,
-  nombre VARCHAR2(300)
+  nombre VARCHAR2(100)
 );
 
 ALTER TABLE Fase ADD CONSTRAINT fase_pk PRIMARY KEY ( id );
@@ -53,7 +57,7 @@ ALTER TABLE Jornada ADD CONSTRAINT jornada_pk PRIMARY KEY ( id );
 CREATE TABLE Deporte 
 (
   id INTEGER NOT NULL,
-  nombre VARCHAR2(1024),
+  nombre VARCHAR2(200),
   imagen VARCHAR2(1024),
   color VARCHAR2(1024)
 );
@@ -65,7 +69,7 @@ ALTER TABLE Deporte ADD CONSTRAINT deporte_pk PRIMARY KEY ( id );
 CREATE TABLE Membresia 
 (
   id INTEGER NOT NULL,
-  nombre VARCHAR2(1024)
+  nombre VARCHAR2(100)
 );
 
 ALTER TABLE Membresia ADD CONSTRAINT membresia_pk PRIMARY KEY ( id );

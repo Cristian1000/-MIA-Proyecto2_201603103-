@@ -7,11 +7,11 @@ import CargaMasiva from '../paginas/Carga.js'
 function Router() {
   return(
     <BrowserRouter>
-      <switch>
+      <Switch>
         <Route exact path="/" component={Login} />
         <Route exact path="/Admin" component={Admin} />
         <Route exact path="/CargaMasiva" component={CargaMasiva} />
-      </switch>
+      </Switch>
     </BrowserRouter>
   );
 }
