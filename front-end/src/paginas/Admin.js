@@ -75,25 +75,103 @@ export default class Admin extends Component {
                     </div>
                     </nav>
                 </div>
+                <div>
+                <button type="button" class="btn btn-primary btn-lg">Crear Temporada</button>
+                <button type="button" class="btn btn-primary btn-lg">Crear Jornada</button> 
+                </div>
                 <div id="Calendario">
                     <br/> <br/>
                     <FullCalendar
-                        plugins={[ dayGridPlugin, listPlugin, time]}
+                        plugins={[ dayGridPlugin, listPlugin, time, interactionPlugin]}
                         initialView="dayGridMonth"
                         headerToolbar={{
                             left: 'dayGridMonth,timeGridWeek,listYear',
                             center: 'title,today',
                             right: 'prevYear,prev,next,nextYear'
                         }}
+                        editable={true}
+                        selectable={true}
+                        selectMirror={true}
+                        dayMaxEvents={true}
                         locale = {'es'}
                         //initialEvents = {this.Ingresar_eventos()}
                         events={this.state.calendarEvents}
+                        select={this.handleDateSelect}
+                        eventContent={renderEventContent} // custom render function
+                        eventClick={this.handleEventClick}
                     />
                 </div>
                 
             </div>
         )
     }
+
+    handleDateSelect = (selectInfo) => {
+        axios.get("http://localhost:3003/ConsultarJornada").then(respuesta => {
+            if (respuesta.data.fecha == "Activa") {
+                let title = prompt('Ingrese Equipo Local')
+                let title2 = prompt('Ingrese Equipo Visitante')
+                let deporte2 = prompt('Ingrese el Deporte')
+                let calendarApi = selectInfo.view.calendar
+
+                var Evento = {
+                    nombreL:title,
+                    nombreV:title2,
+                    fecha:selectInfo.startStr,
+                    idJornada:respuesta.data.id,
+                    deporte:deporte2
+                }
+
+                axios.post("http://localhost:3003/AgregarEvento", JSON.stringify(Evento)).then(
+                    result => {
+                        console.log("Se envio la informacion");
+                        //console.log(dato)
+                    }
+                ).catch(console.log)
+            
+                calendarApi.unselect() // clear date selection
+            
+                if (title) {
+                calendarApi.addEvent({
+                    title,
+                    start: selectInfo.startStr,
+                })
+                }
+            } else {
+                axios.get("http://localhost:3003/ConsultarTemporada").then(res =>{
+                    if (res.data.fecha == "Activa") {
+                        alert("No hay Jornada activa, Por favor crear una nueva")
+                    }else{
+                        alert("No hay temporada Activa, Por vafor cree una Temporada y Jornada que esten activas")
+                    }
+                })
+            }
+        }
+        )
+        
+      }
+
+      handleEventClick = (clickInfo) => {
+        if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
+          clickInfo.event.remove()
+        }
+      }
+/*
+      handleEvents = (events) => {
+        this.setState({
+            calendarEvents: events
+        })
+      }*/
+      
 }
+
+function renderEventContent(eventInfo) {
+    return (
+      <>
+        <b>{eventInfo.timeText}</b>
+        <i>{eventInfo.event.title}</i>
+      </>
+    )
+  }
 
 
