@@ -102,7 +102,7 @@ func CargaMasiva(w http.ResponseWriter, r *http.Request) {
 		for _, element := range element.Resultado_ {
 			temporada = element.Temporada
 			resultado_Temp := validar_Temporada(temporada)
-			if resultado_Temp != temporada {
+			if resultado_Temp == "" {
 				ingresar_Temorada(element.Temporada)
 				idTemporada = id_Temporada(temporada)
 			}
@@ -171,8 +171,34 @@ func Agregar_Evento(w http.ResponseWriter, r *http.Request) {
 	//var nuevoRetorno Retorno
 	var newEvento Evento2
 	json.NewDecoder(r.Body).Decode(&newEvento)
-	fmt.Println(newEvento)
+	//fmt.Println(newEvento)
 	Crear_Evento(newEvento.NombreL, newEvento.NombreV, newEvento.Fecha, newEvento.IdJornada, newEvento.Deporte)
+}
+
+func Agregar_Jornada(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var newJornada Jornada2
+	json.NewDecoder(r.Body).Decode(&newJornada)
+	tempo := validar_Temporada2(newJornada.Temporada)
+	jor := validar_Jornada(newJornada.Nombre, tempo)
+	if jor == "" {
+		Crear_Jornada(newJornada.Nombre, newJornada.Fecha, newJornada.Fecha2, newJornada.Temporada, newJornada.Fase)
+		json.NewEncoder(w).Encode("Jornada Creada")
+	} else {
+		json.NewEncoder(w).Encode("Jornada no Creada")
+	}
+}
+
+func Agregar_Temporada(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var newTemporada Temporada2
+	tempo := validar_Temporada(newTemporada.Nombre)
+	if tempo == "" {
+		Crear_Temporada(newTemporada.Nombre, newTemporada.Fecha, newTemporada.Fecha2, newTemporada.Fase)
+		json.NewEncoder(w).Encode("TEmporada Creada")
+	} else {
+		json.NewEncoder(w).Encode("Temporada no Creada")
+	}
 }
 
 func main() {
@@ -184,6 +210,8 @@ func main() {
 	router.HandleFunc("/ConsultarJornada", Estado_Jornada).Methods("GET")
 	router.HandleFunc("/ConsultarTemporada", Estado_Temporada).Methods("GET")
 	router.HandleFunc("/AgregarEvento", Agregar_Evento).Methods("POST")
+	router.HandleFunc("/AgregarJornada", Agregar_Jornada).Methods("POST")
+	router.HandleFunc("/AgregarTemporada", Agregar_Temporada).Methods("POST")
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":3003", handler))
@@ -513,6 +541,35 @@ func validar_Temporada(nombre string) (consulta string) {
 	return consulta
 }
 
+func validar_Temporada2(nombre string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT NOMBRE FROM TEMPORADA WHERE ID = :1`,
+		nombre)
+
+	if err != nil {
+		fmt.Println("validar temporada2")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x string
+	for rows.Next() {
+		rows.Scan(&x)
+		consulta = x
+	}
+	fmt.Println(x)
+	return consulta
+}
+
 func validar_Tier(nombre string) (consulta string) {
 	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
 	if err != nil {
@@ -804,8 +861,12 @@ func Actualizar_Temporada(id string) {
 }
 
 type Jornada2 struct {
-	Id    string `json:"id"`
-	Fecha string `json:"fecha"`
+	Id        string `json:"id"`
+	Nombre    string `json:"nombre"`
+	Fecha     string `json:"fecha_i"`
+	Fecha2    string `json:"fecha_f"`
+	Temporada string `json:"temorada"`
+	Fase      string `json:"fase"`
 }
 
 func Consultar_Jornada() (consulta Jornada2) {
@@ -817,7 +878,7 @@ func Consultar_Jornada() (consulta Jornada2) {
 
 	defer db.Close()
 
-	rows, err := db.Query(`SELECT * FROM (SELECT ID, TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM JORNADA
+	rows, err := db.Query(`SELECT * FROM (SELECT JORNADA.ID, FASE.NOMBRE, TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM JORNADA, FASE WHERE JORNADA.ID_FASE = FASE.ID
 	ORDER BY TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') ASC)
 	WHERE ROWNUM = 1`)
 
@@ -831,22 +892,23 @@ func Consultar_Jornada() (consulta Jornada2) {
 
 	var id int
 	var fecha string
+	var fase string
 	var jornada Jornada2
 	for rows.Next() {
-		rows.Scan(&id, &fecha)
+		rows.Scan(&id, &fase, &fecha)
 		jornada.Id = strconv.Itoa(id)
-		if fecha == "" {
-			jornada.Fecha = "Activa"
-		} else {
-			jornada.Fecha = fecha
-		}
+		jornada.Fase = fase
+		jornada.Fecha2 = fecha
 	}
 	return jornada
 }
 
 type Temporada2 struct {
-	Id    string `json:"id"`
-	Fecha string `json:"fecha"`
+	Id     string `json:"id"`
+	Nombre string `json:"nombre"`
+	Fecha  string `json:"fecha"`
+	Fecha2 string `json:"fechaf"`
+	Fase   string `json:"fase"`
 }
 
 func Consultar_Temporada() (consulta Temporada2) {
@@ -858,7 +920,7 @@ func Consultar_Temporada() (consulta Temporada2) {
 
 	defer db.Close()
 
-	rows, err := db.Query(`SELECT * FROM (SELECT ID, TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM TEMPORADA
+	rows, err := db.Query(`SELECT * FROM (SELECT TEMPORADA.ID, FASE.NOMBRE, TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM TEMPORADA, FASE WHERE TEMPORADA.FASE = FASE.ID
 	ORDER BY TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') DESC)
 	WHERE ROWNUM = 1`)
 
@@ -872,15 +934,13 @@ func Consultar_Temporada() (consulta Temporada2) {
 
 	var id int
 	var fecha string
+	var fase string
 	var jornada Temporada2
 	for rows.Next() {
-		rows.Scan(&id, &fecha)
+		rows.Scan(&id, &fase, &fecha)
 		jornada.Id = strconv.Itoa(id)
-		if fecha == "" {
-			jornada.Fecha = "Activa"
-		} else {
-			jornada.Fecha = fecha
-		}
+		jornada.Fase = fase
+		jornada.Fecha2 = fecha
 	}
 	return jornada
 }
@@ -903,6 +963,50 @@ func Crear_Evento(nombreL string, nombreV string, fecha string, idJornada string
 
 	rows, err := db.Exec(`CALL Crear_Evento(:1, :2, :3, :4, :5)`,
 		nombreL, nombreV, fecha, idJornada, idDeporte)
+
+	if err != nil {
+		fmt.Println("Crear Evento")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		fmt.Println(rows)
+		return
+	}
+}
+
+func Crear_Temporada(nombre string, fecha string, fechaf string, fase string) {
+
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Exec(`CALL Creat_Temporada(:1, :2, :3, :4)`,
+		nombre, fecha, fechaf, fase)
+
+	if err != nil {
+		fmt.Println("Crear Temporada")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		fmt.Println(rows)
+		return
+	}
+}
+
+func Crear_Jornada(nombre string, fechai string, fechaf string, temorada string, fase string) {
+
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Exec(`CALL Crear_Jornada(:1, :2, :3, :4, :5)`,
+		nombre, fechai, fechaf, temorada, fase)
 
 	if err != nil {
 		fmt.Println("Crear Evento")

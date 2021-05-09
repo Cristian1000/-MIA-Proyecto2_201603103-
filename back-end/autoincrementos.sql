@@ -109,7 +109,7 @@ SELECT Autoincremento_Bitacora.NEXTVAL INTO :NEW.id FROM DUAL;
 END;
 
 
-drop TRIGGER AUTOINCREMENTO_Cliente;
+drop TRIGGER Validar_Usuario;
 
 drop SEQUENCE Autoincremento;
 drop SEQUENCE AUTOINCREMENTO_DEPORTE;
@@ -122,3 +122,55 @@ drop SEQUENCE AUTOINCREMENTO_PREDICCION;
 drop SEQUENCE AUTOINCREMENTO_TEMPORADA;
 
 SELECT nombre FROM cliente
+
+
+------trigger----
+--Create a new Table Trigger
+
+COMMIT
+
+create or replace NONEDITIONABLE TRIGGER Validar_Usuario
+AFTER INSERT ON CLIENTE
+FOR EACH ROW
+    DECLARE
+    correoI VARCHAR2(250);
+    --nombreI VARCHAR2(250);
+    --edad INTEGER;
+    --actual DATE;
+BEGIN
+        --SELECT (CLIENTE.USUARIO) into nombreI FROM CLIENTE WHERE CLIENTE.USUARIO = :new.USUARIO;
+        --edad := TO_NUMBER(to_char(:new.fecha_nacimiento, 'YYYY'));
+        SELECT regexp_substr(:new.correo,'[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}') into correoI FROM DUAL;
+        --SELECT SYSDATE INTO actual from DUAL;
+        --edad := TO_NUMBER(to_char(actual, 'YYYY')) - edad;
+        
+        if (correoI = '') THEN
+            DELETE FROM CLIENTE WHERE CLIENTE.ID = :new.id ;
+            DBMS_OUTPUT.PUT_LINE('Cliente no valido');
+        end if;
+END;
+
+-- Insert rows in a Table
+
+INSERT INTO CLIENTE 
+(
+  NOMBRE,
+  APELLIDO,
+  PASSWORD,
+  USUARIO,
+  FECHA_NACIMIENTO,
+  CORREO
+)
+VALUES
+(
+  'Cris',
+  'Raguay',
+  '1235',
+  'pablo',
+  '25/may/2010',
+  'dfghjkl'
+);
+
+
+
+SELECT     regexp_substr('cristian@gmail.com','[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}') FROM  DUAL

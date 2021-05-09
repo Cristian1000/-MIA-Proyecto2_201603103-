@@ -7,6 +7,7 @@ import time from '@fullcalendar/timegrid';
 import moment from 'moment';
 import '../css/Admin.css';
 import axios from 'axios';
+import {Modal, ModalHeader, ModalBody, ModalFooter, FormGroup, Input, Label, Button } from 'reactstrap'
 
 export default class Admin extends Component {
     
@@ -33,13 +34,45 @@ export default class Admin extends Component {
       }
 
     state = {
+        Temporada:{
+            nombre_Temp:'',
+            fecha_iTemp:'',
+            fecha_fTemp:''
+        },
+        Jornada:{
+            nombre_Jor:'',
+            fecha_iJor:'',
+            fecha_fJor:''
+        },
+        abierto: false,
+        abierto2: false,
         calendarWeekends: true,
-        calendarEvents: [
-            {title: "Research and Development vs Business Development", start: "2018/04/26 09:32"},
-            { title: 'event 2', date: '2021-04-02' }
-        ]
+        calendarEvents: [ ]
       };
-  
+    
+    abrirJornada = () =>{
+        this.setState({abierto: !this.state.abierto});
+    }
+    
+    abrirTemporada = () =>{
+        this.setState({abierto2: !this.state.abierto2});
+    }
+
+    handleChange = e => {
+         this.setState({
+            Temporada:{
+                ...this.state.Temporada,
+                [e.target.name]: e.target.value
+            },
+            Jornada:{
+                ...this.state.Jornada,
+                [e.target.name]: e.target.value
+            }
+        })
+
+        console.log(this.state.Jornada);
+        console.log(this.state.Temporada);
+    }
 
     render() {
 
@@ -76,8 +109,15 @@ export default class Admin extends Component {
                     </nav>
                 </div>
                 <div>
-                <button type="button" class="btn btn-primary btn-lg">Crear Temporada</button>
-                <button type="button" class="btn btn-primary btn-lg">Crear Jornada</button> 
+                    <br/>
+                <button type="button" className="btn btn-primary btn-lg" onClick = {this.abrirTemporada}>Crear Temporada</button>
+                <button type="button" className="btn btn-primary btn-lg" onClick ={this.abrirJornada} >Crear Jornada</button> 
+                    <br/>
+                </div>
+                <div>
+                <br/>
+                <button type="button" className="btn btn-primary btn-lg">Terminar Temporada</button>
+                    <br/>
                 </div>
                 <div id="Calendario">
                     <br/> <br/>
@@ -102,13 +142,66 @@ export default class Admin extends Component {
                     />
                 </div>
                 
+                <Modal isOpen={this.state.abierto}>
+                    <ModalHeader>
+                        Crear Jornada
+                    </ModalHeader>
+
+                    <ModalBody>
+                        <FormGroup>
+                            <Label for="nombre-jornada">Nombre</Label>
+                            <Input type="text" id="nombre-jornada" name="nombre_Jor" onChange={this.handleChange}></Input>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="fecha_iJ">Fecha Inicio</Label>
+                            <Input type="datetime-local" id="fecha_iJ" name="fecha_iJor" onChange={this.handleChange}></Input>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="fecha_fJ">Fecha Fin</Label>
+                            <Input type="datetime-local" id="fecha_fJ" name="fecha_fJor" onChange={this.handleChange}></Input>
+                        </FormGroup>
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button>Crear</Button>
+                        <Button onClick={this.abrirJornada}>Cancelar</Button>
+                    </ModalFooter>
+                </Modal>
+
+                <Modal isOpen={this.state.abierto2}>
+                    <ModalHeader>
+                        Crear Temporada
+                    </ModalHeader>
+                    
+                    <ModalBody>
+                        <FormGroup>
+                            <Label for="nombre-temporada">Nombre</Label>
+                            <Input type="text" id="nombre-temporada" name="nombre_Temp" onChange={this.handleChange}></Input>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="fecha_iT">Fecha Inicio</Label>
+                            <Input type="date" id="fecha_iT" name="fecha_iTemp" onChange={this.handleChange}></Input>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="fecha_fT">Fecha Fin</Label>
+                            <Input type="date" id="fecha_fT" name="fecha_fTemp" onChange={this.handleChange}></Input>
+                        </FormGroup>
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button>Crear</Button>
+                        <Button onClick={this.abrirTemporada}>Cancelar</Button>
+                    </ModalFooter>
+                </Modal>
+
             </div>
+
         )
     }
 
     handleDateSelect = (selectInfo) => {
         axios.get("http://localhost:3003/ConsultarJornada").then(respuesta => {
-            if (respuesta.data.fecha == "Activa") {
+            if (respuesta.data.fase == "Activa") {
                 let title = prompt('Ingrese Equipo Local')
                 let title2 = prompt('Ingrese Equipo Visitante')
                 let deporte2 = prompt('Ingrese el Deporte')
@@ -121,6 +214,8 @@ export default class Admin extends Component {
                     idJornada:respuesta.data.id,
                     deporte:deporte2
                 }
+
+                title += " vs " + title2;
 
                 axios.post("http://localhost:3003/AgregarEvento", JSON.stringify(Evento)).then(
                     result => {
@@ -139,7 +234,7 @@ export default class Admin extends Component {
                 }
             } else {
                 axios.get("http://localhost:3003/ConsultarTemporada").then(res =>{
-                    if (res.data.fecha == "Activa") {
+                    if (res.data.fase == "Activa") {
                         alert("No hay Jornada activa, Por favor crear una nueva")
                     }else{
                         alert("No hay temporada Activa, Por vafor cree una Temporada y Jornada que esten activas")
@@ -162,6 +257,60 @@ export default class Admin extends Component {
             calendarEvents: events
         })
       }*/
+
+      Agregar_Jornada = () =>{
+        axios.get("http://localhost:3003/ConsultarJornada").then(evento =>{
+            if (evento.data.fase != "Activa") {
+                axios.get("http://localhost:3003/ConsultarTemporada").then(evento2 =>{
+                    if (evento2.data.fase == "Activa") {
+                        jornada ={
+                            nombre:this.state.Jornada.nombre_Jor,
+                            fecha_i:this.state.Jornada.fecha_iJor,
+                            feccha_f:this.state.Jornada.fecha_fJor,
+                            temporada:evento2.data.id,
+                            fase:"Activa"
+                        }
+
+                        axios.post("http://localhost:3003/AgregarJornada", JSON.stringify(jornada)).then(event =>{
+                            alert(event.data)
+                        }
+
+                        ).catch();
+
+                    } else {
+                        alert("No hay temporada Activa")
+                    }
+                })
+
+                
+            }else{
+                alert("Tiene que terminar la Jornada Actual para crear otra")
+            }
+        })
+      }
+
+
+      Agregar_Temporada = () =>{
+        axios.get("http://localhost:3003/ConsultarTemorada").then(evento =>{
+            if (evento.data.fase != "Activa") {
+                temporada = {
+                    nombre:this.state.Temporada.nombre_Temp,
+                    fecha:this.state.Temporada.fecha_iTemp,
+                    fechaf:this.state.Temporada.fecha_fTemp,
+                    fase:"Activa"
+                }
+
+                axios.post("http://localhost:3003/AgregarJornada", JSON.stringify(temporada)).then(event =>{
+                            alert(event.data)
+                        }
+
+                        ).catch();
+                
+            }else{
+                alert("Tiene que terminar la Temporada Actual para crear otra")
+            }
+        })
+      }
       
 }
 
@@ -174,4 +323,27 @@ function renderEventContent(eventInfo) {
     )
   }
 
+/*
+function Agregar_Jornada() {
+    axios.get("http://localhost:3003/ConsultarJornada").then(evento =>{
+        if (evento.data.fecha != "Activa") {
+            jornada ={
+                nombre:this.state
+            }
+        }else{
+            alert("Tiene que terminar la Jornada Actual para crear otra")
+        }
+    })
+}
 
+
+function Agregar_Temporada() {
+    axios.get("http://localhost:3003/ConsultarTemorada").then(evento =>{
+        if (evento.data.fecha != "Activa") {
+            let nombre = prompt('Ingrese un nombre')
+            
+        }else{
+            alert("Tiene que terminar la Temporada Actual para crear otra")
+        }
+    })
+}*/

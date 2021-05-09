@@ -24,6 +24,7 @@ CREATE TABLE Temporada
   nombre VARCHAR2(150),
   fecha_inicio DATE,
   fecha_fin DATE
+  fase INTEGER
 );
 
 ALTER TABLE Temporada ADD CONSTRAINT temporada_pk PRIMARY KEY ( id );
@@ -163,6 +164,10 @@ ALTER TABLE MEMBRESIA_TEMPORADA
     ADD CONSTRAINT membresia_temp_fk FOREIGN KEY ( ID_MEMBRESIA )
         REFERENCES MEMBRESIA ( ID );
 
+ALTER TABLE TEMPORADA
+    ADD CONSTRAINT fase_temporada_fk FOREIGN KEY ( TEMPORADA.FASE )
+        REFERENCES FASE ( FASE.ID );
+
 
 CREATE SEQUENCE Autoincremento
 START WITH 1
@@ -208,6 +213,8 @@ VALUES
   '123',
   'cristian'
 );
+
+
 
 -- Delete rows from a Table
 
