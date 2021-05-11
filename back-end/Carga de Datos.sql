@@ -120,13 +120,15 @@ END;
 CREATE or REPLACE PROCEDURE Crear_Evento(nombreL  in VARCHAR2, nombreV in VARCHAR2, fechaE VARCHAR2, idJornada in INTEGER, idDeporte in INTEGER)
 IS
 BEGIN
-        INSERT INTO EVENTO(NOMBRE_LOCAL, NOMBRE_VISITANTE, FECHA, ID_JORNADA, ID_DEPORTE)
+        INSERT INTO EVENTO(NOMBRE_LOCAL, NOMBRE_VISITANTE, FECHA, ID_JORNADA, ID_DEPORTE, R_LOCAL, R_VISITANTE)
         VALUES(
                 nombreL,
                 nombreV,
-                to_date(fechaE, 'DD-MM-YYYY HH24:MI'),
+                to_date(fechaE, 'YYYY-MM-DD HH24:MI'),
                 idJornada,
-                idDeporte
+                idDeporte,
+                0,
+                0
         );
 END;
 
@@ -136,8 +138,8 @@ IS
 BEGIN
         INSERT INTO Temporada (NOMBRE, FECHA_INICIO, FECHA_FIN, FASE)
         values(nombreE,
-        to_date(fechai, 'DD-MM-YYYY HH24:MI'),
-        to_date(fechaf, 'DD-MM-YYYY HH24:MI'),
+        to_date(fechai, 'YYYY-MM-DD HH24:MI'),
+        to_date(fechaf, 'YYYY-MM-DD HH24:MI'),
         (select FASE.ID from FASE WHERE FASE.NOMBRE = faseE)
         );
 END;
@@ -147,20 +149,84 @@ IS
 BEGIN
         insert into JORNADA(NOMBRE, FECHA_INICIO, FECHA_FIN, ID_TEMPORADA, ID_FASE)
         VALUES(nombreE,
-        to_date(fechai, 'dd/mm/yyyy hh24:mi'),
-        to_date(fechaf, 'dd/mm/yyyy hh24:mi'),
+        to_date(fechai, 'YYYY-MM-DD HH24:MI'),
+        to_date(fechaf, 'YYYY-MM-DD HH24:MI'),
         temporadaE,
         (select FASE.ID from FASE WHERE FASE.NOMBRE = faseE)
         );
 END;
 
 
+create or REPLACE PROCEDURE Agregar_Resultado(loc in INTEGER, vis in INTEGER, idE in INTEGER)
+IS
+estado2 VARCHAR2(50);
+BEGIN
+        SELECT ESTADO into estado2 FROM EVENTO WHERE ID = idE;
+        if estado2 <> 'modificado' THEN
+                UPDATE EVENTO SET
+                EVENTO.R_LOCAL = loc,
+                EVENTO.R_VISITANTE = vis,
+                EVENTO.ESTADO = 'modificado'
+                WHERE EVENTO.ID = idE;
+                COMMIT;
+        end if;
+END;
 
+create or REPLACE PROCEDURE Agregar_Prediccion (loc in INTEGER, vis in INTEGER, idC in INTEGER, idE in INTEGER, salida out VARCHAR2)
+IS
+existe INTEGER:=0;
+BEGIN
+        SELECT COUNT(ID_CLIENTE) into existe FROM PREDICCION where ID_CLIENTE = idC and ID_EVENTO = idE;
+        if existe < 1 THEN
+                INSERT into PREDICCION(PUNTOD_LOCAL, PUNTOS_VISITANTE, ID_CLIENTE, ID_EVENTO)
+                VALUES(loc, vis, idC, idE);
+                salida := 'Prediccion Agregada';
+        ELSE
+                salida := 'No se puede Modificar la Prediccion';
+        end if;
+END;
 
+create or REPLACE PROCEDURE Inicio_sesion(resultado OUT VARCHAR2, usu in VARCHAR2, pass in VARCHAR2)
+IS
+BEGIN
+        SELECT to_char(ID) into resultado FROM CLIENTE where USUARIO = usu and PASSWORD = pass;
+END;
+
+SELECT ID, NOMBRE_LOCAL, NOMBRE_VISITANTE, TO_CHAR(FECHA,'YYYY-MM-DD HH24:MI'), R_LOCAL, R_VISITANTE FROM EVENTO
+
+SET AUTOPRINT ON
 -----------------------------------Pruebas--------------
+
+CREATE OR REPLACE TRIGGER Validar_Usuario
+   After INSERT ON cliente
+   for each row
+   DECLARE  PRUEBA INT;
+   pragma autonomous_transaction;
+   BEGIN
+   SELECT COUNT(*) INTO PRUEBA FROM cliente WHERE USUARIO = :new.USUARIO;
+   if PRUEBA >= 1 THEN
+   --rollback;
+   DELETE FROM cliente WHERE id = :new.id;
+   end if;   
+ END Validar_Usuario;
+
+-- Insert rows in a Table
+
+
+INSERT into Cliente(nombre,USUARIO)
+values('Juan', 'ewpt')
+
+select * from EVENTO
+
+delete from CLIENTE
+WHERE NOMBRE =  'Juan'
 
 alter TABLE TEMPORADA
 add Fase INTEGER;
+
+
+alter TABLE EVENTO
+add estado VARCHAR2(50);
 
 select * FROM EVENTO WHERE EVENTO.ID_JORNADA = 3
 
@@ -203,7 +269,7 @@ WHERE ROWNUM = 1
 
 
 SELECT * FROM (SELECT TEMPORADA.ID, FASE.NOMBRE, TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM TEMPORADA, FASE WHERE TEMPORADA.FASE = FASE.ID
-	ORDER BY TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') DESC)
+	ORDER BY TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') ASC)
 	WHERE ROWNUM = 1
 
 
@@ -212,15 +278,17 @@ SELECT * FROM (SELECT TEMPORADA.ID,  TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH2
 	WHERE ROWNUM = 1
 
 UPDATE TEMPORADA SET
-TEMPORADA.FASE = 1
+TEMPORADA.FASE = 3
 WHERE ID = 1
 
 
 SELECT * FROM (SELECT JORNADA.ID, FASE.NOMBRE, TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM JORNADA, FASE WHERE JORNADA.ID_FASE = FASE.ID
-	ORDER BY TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') ASC)
+	ORDER BY TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') DESC)
 	WHERE ROWNUM = 1
 
-SELECT * FROM JORNADA
+SELECT * FROM TEMPORADA WHERE NOMBRE = '2021Q1'
+
+SELECT * FROM JORNADA WHERE ID_TEMPORADA = 41
 
 
 SELECT TO_CHAR(FECHA,'YYYY-MM-DD HH24:MI') FROM EVENTO
@@ -245,4 +313,6 @@ SELECT * FROM (SELECT ID, TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM
         ORDER BY TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') DESC)
         WHERE ROWNUM = 1
 
-SELECT * FROM EVENTO
+SELECT * FROM EVENTO WHERE ID_JORNADA = 162
+
+SELECT * from DEPORTE

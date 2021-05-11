@@ -7,7 +7,7 @@ import time from '@fullcalendar/timegrid';
 import moment from 'moment';
 import '../css/Admin.css';
 import axios from 'axios';
-import {Modal, ModalHeader, ModalBody, ModalFooter, FormGroup, Input, Label, Button } from 'reactstrap'
+import {Modal, ModalHeader, ModalBody, ModalFooter, FormGroup, Input, Label, Button, FormText } from 'reactstrap'
 
 export default class Admin extends Component {
     
@@ -163,7 +163,7 @@ export default class Admin extends Component {
                     </ModalBody>
 
                     <ModalFooter>
-                        <Button>Crear</Button>
+                        <Button onClick={this.Agregar_Jornada}>Crear</Button>
                         <Button onClick={this.abrirJornada}>Cancelar</Button>
                     </ModalFooter>
                 </Modal>
@@ -180,16 +180,16 @@ export default class Admin extends Component {
                         </FormGroup>
                         <FormGroup>
                             <Label for="fecha_iT">Fecha Inicio</Label>
-                            <Input type="date" id="fecha_iT" name="fecha_iTemp" onChange={this.handleChange}></Input>
+                            <Input type="datetime-local" id="fecha_iT" name="fecha_iTemp" onChange={this.handleChange}></Input>
                         </FormGroup>
                         <FormGroup>
                             <Label for="fecha_fT">Fecha Fin</Label>
-                            <Input type="date" id="fecha_fT" name="fecha_fTemp" onChange={this.handleChange}></Input>
+                            <Input type="datetime-local" id="fecha_fT" name="fecha_fTemp" onChange={this.handleChange}></Input>
                         </FormGroup>
                     </ModalBody>
 
                     <ModalFooter>
-                        <Button>Crear</Button>
+                        <Button onClick={this.Agregar_Temporada}>Crear</Button>
                         <Button onClick={this.abrirTemporada}>Cancelar</Button>
                     </ModalFooter>
                 </Modal>
@@ -206,15 +206,21 @@ export default class Admin extends Component {
                 let title2 = prompt('Ingrese Equipo Visitante')
                 let deporte2 = prompt('Ingrese el Deporte')
                 let calendarApi = selectInfo.view.calendar
-
+                var fecha_E = selectInfo.startStr
+                var fecha_S = ""
+                for (let i = 0; i < 16; i++) {
+                    fecha_S += fecha_E.charAt(i)
+                    console.log(fecha_S)           
+                }
                 var Evento = {
                     nombreL:title,
                     nombreV:title2,
-                    fecha:selectInfo.startStr,
+                    fecha:fecha_S,
                     idJornada:respuesta.data.id,
                     deporte:deporte2
                 }
 
+                console.log(Evento)
                 title += " vs " + title2;
 
                 axios.post("http://localhost:3003/AgregarEvento", JSON.stringify(Evento)).then(
@@ -247,9 +253,19 @@ export default class Admin extends Component {
       }
 
       handleEventClick = (clickInfo) => {
-        if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-          clickInfo.event.remove()
+        clickInfo.event.id
+        let local2 = prompt("Local")
+        let Visitante = prompt("Visitante")
+        var Resultado = {
+            id:clickInfo.event.id,
+            local:local2,
+            visitante:Visitante
         }
+        console.log(Resultado)
+        axios.post("http://localhost:3003/AgregarResultado", JSON.stringify(Resultado)).then(res =>{
+            alert(res.data)
+        }).catch()
+
       }
 /*
       handleEvents = (events) => {
@@ -263,14 +279,14 @@ export default class Admin extends Component {
             if (evento.data.fase != "Activa") {
                 axios.get("http://localhost:3003/ConsultarTemporada").then(evento2 =>{
                     if (evento2.data.fase == "Activa") {
-                        jornada ={
+                        var jornada ={
                             nombre:this.state.Jornada.nombre_Jor,
                             fecha_i:this.state.Jornada.fecha_iJor,
-                            feccha_f:this.state.Jornada.fecha_fJor,
+                            fecha_f:this.state.Jornada.fecha_fJor,
                             temporada:evento2.data.id,
                             fase:"Activa"
                         }
-
+                        console.log(jornada)
                         axios.post("http://localhost:3003/AgregarJornada", JSON.stringify(jornada)).then(event =>{
                             alert(event.data)
                         }
@@ -291,16 +307,18 @@ export default class Admin extends Component {
 
 
       Agregar_Temporada = () =>{
-        axios.get("http://localhost:3003/ConsultarTemorada").then(evento =>{
+        axios.get("http://localhost:3003/ConsultarTemporada").then(evento =>{
             if (evento.data.fase != "Activa") {
-                temporada = {
+                var temporada = {
                     nombre:this.state.Temporada.nombre_Temp,
                     fecha:this.state.Temporada.fecha_iTemp,
                     fechaf:this.state.Temporada.fecha_fTemp,
                     fase:"Activa"
                 }
 
-                axios.post("http://localhost:3003/AgregarJornada", JSON.stringify(temporada)).then(event =>{
+                console.log(temporada)
+
+                axios.post("http://localhost:3003/AgregarTemporada", JSON.stringify(temporada)).then(event =>{
                             alert(event.data)
                         }
 

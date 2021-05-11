@@ -129,26 +129,37 @@ SELECT nombre FROM cliente
 
 COMMIT
 
-create or replace NONEDITIONABLE TRIGGER Validar_Usuario
+create or replace  TRIGGER Validar_Usuario
 AFTER INSERT ON CLIENTE
 FOR EACH ROW
     DECLARE
-    correoI VARCHAR2(250);
-    --nombreI VARCHAR2(250);
-    --edad INTEGER;
-    --actual DATE;
+    correoI VARCHAR2;
+    nombreI VARCHAR2;
+    edad INTEGER;
+    actual DATE;
 BEGIN
-        --SELECT (CLIENTE.USUARIO) into nombreI FROM CLIENTE WHERE CLIENTE.USUARIO = :new.USUARIO;
-        --edad := TO_NUMBER(to_char(:new.fecha_nacimiento, 'YYYY'));
+        SELECT (CLIENTE.USUARIO) into nombreI FROM CLIENTE WHERE CLIENTE.USUARIO = :new.USUARIO;
+        edad := TO_NUMBER(to_char(:new.fecha_nacimiento, 'YYYY'));
         SELECT regexp_substr(:new.correo,'[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}') into correoI FROM DUAL;
-        --SELECT SYSDATE INTO actual from DUAL;
-        --edad := TO_NUMBER(to_char(actual, 'YYYY')) - edad;
+        SELECT SYSDATE INTO actual from DUAL;
+        edad := TO_NUMBER(to_char(actual, 'YYYY')) - edad;
         
-        if (correoI = '') THEN
+        if (correoI = '' or edad < 18 or nombreI <> '') THEN
             DELETE FROM CLIENTE WHERE CLIENTE.ID = :new.id ;
             DBMS_OUTPUT.PUT_LINE('Cliente no valido');
         end if;
 END;
+
+SELECT * FROM CLIENTE
+
+create or replace trigger Cargar_Puntos
+after update on Evento
+for each row
+DECLARE
+BEGIN
+
+END;
+
 
 -- Insert rows in a Table
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	_ "github.com/godror/godror"
 	"github.com/gorilla/mux"
@@ -65,6 +66,7 @@ type Retorno struct {
 	Eventos []Dentro `json:"Eventos"`
 }
 type Dentro struct {
+	Id    string `json:"id"`
 	Title string `json:"title"`
 	Start string `json:"start"`
 }
@@ -76,7 +78,7 @@ func indexRoute(w http.ResponseWriter, r *http.Request) {
 	//valida_Usuario("Cris10")
 	//validar_Deporte("golf")
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Consultar_Temporada())
+	json.NewEncoder(w).Encode(Inicio("jpook0@army.mil", "Mvjtqy"))
 
 }
 
@@ -171,6 +173,8 @@ func Agregar_Evento(w http.ResponseWriter, r *http.Request) {
 	//var nuevoRetorno Retorno
 	var newEvento Evento2
 	json.NewDecoder(r.Body).Decode(&newEvento)
+	newEvento.Fecha = strings.Replace(newEvento.Fecha, "T", " ", -1)
+	fmt.Println(newEvento)
 	//fmt.Println(newEvento)
 	Crear_Evento(newEvento.NombreL, newEvento.NombreV, newEvento.Fecha, newEvento.IdJornada, newEvento.Deporte)
 }
@@ -179,8 +183,11 @@ func Agregar_Jornada(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var newJornada Jornada2
 	json.NewDecoder(r.Body).Decode(&newJornada)
+	newJornada.Fecha = strings.Replace(newJornada.Fecha, "T", " ", -1)
+	newJornada.Fecha2 = strings.Replace(newJornada.Fecha2, "T", " ", -1)
 	tempo := validar_Temporada2(newJornada.Temporada)
 	jor := validar_Jornada(newJornada.Nombre, tempo)
+	fmt.Println(newJornada)
 	if jor == "" {
 		Crear_Jornada(newJornada.Nombre, newJornada.Fecha, newJornada.Fecha2, newJornada.Temporada, newJornada.Fase)
 		json.NewEncoder(w).Encode("Jornada Creada")
@@ -192,13 +199,86 @@ func Agregar_Jornada(w http.ResponseWriter, r *http.Request) {
 func Agregar_Temporada(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var newTemporada Temporada2
+	json.NewDecoder(r.Body).Decode(&newTemporada)
+	newTemporada.Fecha = strings.Replace(newTemporada.Fecha, "T", " ", -1)
+	newTemporada.Fecha2 = strings.Replace(newTemporada.Fecha2, "T", " ", -1)
+	fmt.Println(newTemporada)
 	tempo := validar_Temporada(newTemporada.Nombre)
 	if tempo == "" {
 		Crear_Temporada(newTemporada.Nombre, newTemporada.Fecha, newTemporada.Fecha2, newTemporada.Fase)
-		json.NewEncoder(w).Encode("TEmporada Creada")
+		json.NewEncoder(w).Encode("Temporada Creada")
 	} else {
 		json.NewEncoder(w).Encode("Temporada no Creada")
 	}
+}
+
+type Resultado2 struct {
+	Id        string `json:"id"`
+	Local     string `json:"local"`
+	Visitante string `json:"visitante"`
+}
+
+func Actualizar_Resultado(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var newResultado Resultado2
+	json.NewDecoder(r.Body).Decode(&newResultado)
+
+	Agregar_Resultado(newResultado.Local, newResultado.Visitante, newResultado.Id)
+
+}
+
+type Usu struct {
+	Usuario string `json:"usuario"`
+	Pass    string `json:"pass"`
+	Id      string `json:"id"`
+}
+
+func Inicio_Sesion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevoInicio Usu
+	json.NewDecoder(r.Body).Decode(&nuevoInicio)
+	nuevoInicio.Id = Inicio(nuevoInicio.Usuario, nuevoInicio.Pass)
+	json.NewEncoder(w).Encode(nuevoInicio)
+}
+
+type Predic struct {
+	Local     string `json:"local"`
+	Visitante string `json:"visitante"`
+	IdCliente string `json:"id_cliente"`
+	IdEvento  string `json:"id_evento"`
+}
+
+func Crear_Prediccion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevaPrediccion Predic
+	json.NewDecoder(r.Body).Decode(&nuevaPrediccion)
+	fmt.Println(nuevaPrediccion)
+	salida := Agregar_Prediccion(nuevaPrediccion.Local, nuevaPrediccion.Visitante, nuevaPrediccion.IdCliente, nuevaPrediccion.IdEvento)
+	fmt.Println(salida)
+	json.NewEncoder(w).Encode(salida)
+}
+
+func Retornar_Usuario(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Usuarios())
+}
+
+func retornar_Tempo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Temporadas())
+}
+
+type Tempo_Usu struct {
+	Id_tempo   string `json:"id_tempo"`
+	Id_cliente string `json:"id_cliente"`
+}
+
+func Tabla_TU(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevoTu Tempo_Usu
+	json.NewDecoder(r.Body).Decode(&nuevoTu)
+	fmt.Println(nuevoTu)
+	json.NewEncoder(w).Encode(Tabal_Temporada(nuevoTu.Id_cliente, nuevoTu.Id_tempo))
 }
 
 func main() {
@@ -212,6 +292,12 @@ func main() {
 	router.HandleFunc("/AgregarEvento", Agregar_Evento).Methods("POST")
 	router.HandleFunc("/AgregarJornada", Agregar_Jornada).Methods("POST")
 	router.HandleFunc("/AgregarTemporada", Agregar_Temporada).Methods("POST")
+	router.HandleFunc("/AgregarResultado", Actualizar_Resultado).Methods("POST")
+	router.HandleFunc("/InicioSesion", Inicio_Sesion).Methods("POST")
+	router.HandleFunc("/IngresarPrediccion", Crear_Prediccion).Methods("POST")
+	router.HandleFunc("/Usuarios", Retornar_Usuario).Methods("GET")
+	router.HandleFunc("/Temporadas", retornar_Tempo).Methods("GET")
+	router.HandleFunc("/TemporadaUsuario", Tabla_TU).Methods("POST")
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":3003", handler))
@@ -727,7 +813,7 @@ func Buscar_evento() (consulta Retorno) {
 
 	defer db.Close()
 
-	rows, err := db.Query(`SELECT NOMBRE_LOCAL, NOMBRE_VISITANTE, TO_CHAR(FECHA,'YYYY-MM-DD HH24:MI') FROM EVENTO`)
+	rows, err := db.Query(`SELECT ID, NOMBRE_LOCAL, NOMBRE_VISITANTE, TO_CHAR(FECHA,'YYYY-MM-DD HH24:MI'), R_LOCAL, R_VISITANTE FROM EVENTO`)
 
 	if err != nil {
 		fmt.Println("Validar jornada")
@@ -737,17 +823,21 @@ func Buscar_evento() (consulta Retorno) {
 	}
 	defer rows.Close()
 	var retorno Retorno
+	var id int
 	var local string
 	var visitante string
 	var fecha string
+	var r_local int
+	var r_visitante int
 	//var captura string
 	//layout := "2006-01-02T15:04:05.000Z"
 	for rows.Next() {
-		rows.Scan(&local, &visitante, &fecha)
+		rows.Scan(&id, &local, &visitante, &fecha, &r_local, &r_visitante)
 		//captura := `{ "title":"` + local + ` vs ` + visitante + `", "start":` + fecha + `}`
 
 		var dento Dentro
-		dento.Title = local + " vs " + visitante
+		dento.Id = strconv.Itoa(id)
+		dento.Title = local + " vs " + visitante + " " + strconv.Itoa(r_local) + " - " + strconv.Itoa(r_visitante)
 
 		//fmt.Println(t)
 		dento.Start = fecha
@@ -865,7 +955,7 @@ type Jornada2 struct {
 	Nombre    string `json:"nombre"`
 	Fecha     string `json:"fecha_i"`
 	Fecha2    string `json:"fecha_f"`
-	Temporada string `json:"temorada"`
+	Temporada string `json:"temporada"`
 	Fase      string `json:"fase"`
 }
 
@@ -879,7 +969,7 @@ func Consultar_Jornada() (consulta Jornada2) {
 	defer db.Close()
 
 	rows, err := db.Query(`SELECT * FROM (SELECT JORNADA.ID, FASE.NOMBRE, TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM JORNADA, FASE WHERE JORNADA.ID_FASE = FASE.ID
-	ORDER BY TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') ASC)
+	ORDER BY TO_CHAR(JORNADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') DESC)
 	WHERE ROWNUM = 1`)
 
 	if err != nil {
@@ -921,7 +1011,7 @@ func Consultar_Temporada() (consulta Temporada2) {
 	defer db.Close()
 
 	rows, err := db.Query(`SELECT * FROM (SELECT TEMPORADA.ID, FASE.NOMBRE, TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') FROM TEMPORADA, FASE WHERE TEMPORADA.FASE = FASE.ID
-	ORDER BY TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') DESC)
+	ORDER BY TO_CHAR(TEMPORADA.FECHA_FIN,'YYYY-MM-DD HH24:MI') ASC)
 	WHERE ROWNUM = 1`)
 
 	if err != nil {
@@ -1009,10 +1099,210 @@ func Crear_Jornada(nombre string, fechai string, fechaf string, temorada string,
 		nombre, fechai, fechaf, temorada, fase)
 
 	if err != nil {
-		fmt.Println("Crear Evento")
+		fmt.Println("Crear Jornada")
 		fmt.Println("Error running query")
 		fmt.Println(err)
 		fmt.Println(rows)
 		return
 	}
+}
+
+func Agregar_Resultado(resultadoL string, resultadoV string, id string) {
+
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Exec(`CALL Agregar_Resultado(:1, :2, :3)`,
+		resultadoL, resultadoV, id)
+
+	if err != nil {
+		fmt.Println("Agregar Resultado")
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		fmt.Println(rows)
+		return
+	}
+}
+
+func Inicio(nombre string, pass string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	var salida string
+	rows, err := db.Exec(`CALL Inicio_sesion(:1, :2, :3)`,
+		sql.Out{Dest: &salida}, nombre, pass)
+
+	if err != nil {
+		fmt.Println("Inicio Secion")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
+	return salida
+}
+
+func Agregar_Prediccion(local string, visitante string, idC string, idE string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	var salida string
+	rows, err := db.Exec(`CALL Agregar_Prediccion(:1, :2, :3, :4, :5)`,
+		local, visitante, idC, idE, sql.Out{Dest: &salida})
+
+	if err != nil {
+		fmt.Println("Ingresar Prediccion")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
+	return salida
+}
+
+type Contenedor_usuario struct {
+	Usuarios []Usu `json:"usuario"`
+}
+
+func Usuarios() (consulta Contenedor_usuario) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT ID, USUARIO FROM cliente")
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var usuarios Contenedor_usuario
+	var id int
+	var nombre string
+	for rows.Next() {
+		var usuario Usu
+		rows.Scan(&id, &nombre)
+		usuario.Id = strconv.Itoa(id)
+		usuario.Usuario = nombre
+		usuarios.Usuarios = append(usuarios.Usuarios, usuario)
+	}
+
+	return usuarios
+}
+
+type Lista_Temporada struct {
+	Id     string `json:"id"`
+	Nombre string `json:"nombre"`
+}
+type Contenedor_Temporada struct {
+	Temoradas []Lista_Temporada `json:"temoradas"`
+}
+
+func Temporadas() (consulta Contenedor_Temporada) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query("SELECT ID, NOMBRE FROM Temporada")
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var temporadas Contenedor_Temporada
+	var id int
+	var nombre string
+	for rows.Next() {
+		var tempo Lista_Temporada
+		rows.Scan(&id, &nombre)
+		tempo.Id = strconv.Itoa(id)
+		tempo.Nombre = nombre
+		temporadas.Temoradas = append(temporadas.Temoradas, tempo)
+	}
+
+	return temporadas
+}
+
+type Contenedor_TU struct {
+	Datos []Temporada_Usuario `json:"datos"`
+}
+
+type Temporada_Usuario struct {
+	Deporte    string `json:"deporte"`
+	Local      string `json:"local"`
+	Visitante  string `json:"visitante"`
+	Prediccion string `json:"prediccion"`
+	Resultado  string `json:"resultado"`
+	Puntos     string `json:"puntos"`
+	Fecha      string `json:"fecha"`
+}
+
+func Tabal_Temporada(idC string, idT string) (consulta Contenedor_TU) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	fmt.Println(idC + " " + idT)
+	rows, err := db.Query(`select Deporte.NOMBRE, Evento.NOMBRE_LOCAL, EVENTO.NOMBRE_VISITANTE, PREDICCION.PUNTOD_LOCAL, PREDICCION.PUNTOS_VISITANTE, EVENTO.R_LOCAL, EVENTO.R_VISITANTE, PREDICCION.PUNTOS_OBTENIDOS, to_char(EVENTO.FECHA, 'YYYY-MM-DD HH24:MI')
+	from Deporte, Cliente, Evento, Temporada, Jornada, Prediccion
+	WHERE TEMPORADA.ID = JORNADA.ID_TEMPORADA and EVENTO.ID_JORNADA = JORNADA.ID and DEPORTE.ID = EVENTO.ID_DEPORTE and EVENTO.ID = PREDICCION.ID_EVENTO and CLIENTE.ID = PREDICCION.ID_CLIENTE and CLIENTE.ID = :1 and TEMPORADA.ID = :2`,
+		idC, idT)
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var contenedor Contenedor_TU
+	var deporte string
+	var local string
+	var visita string
+	var p_local int
+	var p_visita int
+	var r_local int
+	var r_visita int
+	var puntos int
+	var fecha string
+	for rows.Next() {
+		var usuario Temporada_Usuario
+		rows.Scan(&deporte, &local, &visita, &p_local, &p_visita, &r_local, &r_visita, &puntos, &fecha)
+		usuario.Deporte = deporte
+		usuario.Local = local
+		usuario.Visitante = visita
+		usuario.Prediccion = strconv.Itoa(p_local) + " - " + strconv.Itoa(p_visita)
+		usuario.Resultado = strconv.Itoa(r_local) + " - " + strconv.Itoa(r_visita)
+		usuario.Puntos = strconv.Itoa(puntos)
+		usuario.Fecha = fecha
+		contenedor.Datos = append(contenedor.Datos, usuario)
+	}
+
+	return contenedor
 }
