@@ -49,6 +49,7 @@ export default class Usuario extends Component {
     state ={
         calendarWeekends: true,
         calendarEvents: []
+        
     }
 
 
@@ -82,14 +83,7 @@ export default class Usuario extends Component {
                 </div>
 
                 <div>
-                    <select name="OS" onClick={this.ShowSelected}>
-                        <option value="1">Windows Vista</option> 
-                        <option value="2">Windows 7</option> 
-                        <option value="3">Windows XP</option>
-                        <option value="10">Fedora</option> 
-                        <option value="11">Debian</option> 
-                        <option value="12">Suse</option> 
-                    </select>
+                
                 </div>
 
                 <div>
