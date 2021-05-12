@@ -54,6 +54,17 @@ type Usuario struct {
 
 type Info map[string]Usuario
 
+type Datos struct {
+	Nombre  string `json:"nombre"`
+	Jugador string `json:"jugador"`
+	P10     string `json:"p10"`
+	P5      string `json:"p5"`
+	P3      string `json:"p3"`
+	P0      string `json:"p0"`
+	Total   string `json:"total"`
+}
+type Posiciones map[string]Datos
+
 type Evento2 struct {
 	NombreL   string `json:"nombreL"`
 	NombreV   string `json:"nombreV"`
@@ -94,6 +105,11 @@ func CargaMasiva(w http.ResponseWriter, r *http.Request) {
 		var temporada string
 		var idJornada string
 		var idTemporada string
+		var p_locar int
+		var p_visita int
+		var r_local int
+		var r_visita int
+		var punto string
 		//var resultado string
 		fmt.Println(key)
 		cliente = element.User
@@ -130,12 +146,35 @@ func CargaMasiva(w http.ResponseWriter, r *http.Request) {
 					retornoTem := retornar_Temporada(temporada)
 					validEvento := validar_Evento(element.Local, element.Visitante, element.Fecha)
 					if validEvento == "" {
+						r_local = element.Resultado.Local
+						r_visita = element.Resultado.Visitante
 						ingresar_Evento(element.Local, element.Visitante, strconv.Itoa(element.Resultado.Local), strconv.Itoa(element.Resultado.Visitante), element.Fecha, element.Deporte, jornada, retornoTem)
 					}
 					evento := retornar_Evento(element.Local, element.Visitante, element.Fecha)
 					validPrediccion := validar_Prediccion(cliente, element.Fecha)
 					if validPrediccion == "" {
-						ingresar_Prediccion(strconv.Itoa(element.Prediccion.Local), strconv.Itoa(element.Prediccion.Visitante), cliente, evento)
+						p_locar = element.Prediccion.Local
+						p_visita = element.Prediccion.Visitante
+
+						if r_local == p_locar && r_visita == p_visita {
+							punto = "10"
+						} else if r_local > r_visita && p_locar > p_visita {
+							if (r_local-p_locar) <= 2 && (r_local-p_locar) <= -2 {
+								punto = "5"
+							} else {
+								punto = "3"
+							}
+						} else if r_local < r_visita && p_locar < p_visita {
+							if (r_visita-p_visita) <= 2 && (r_visita-p_visita) <= -2 {
+								punto = "5"
+							} else {
+								punto = "3"
+							}
+						} else {
+							punto = "0"
+						}
+
+						ingresar_Prediccion(strconv.Itoa(element.Prediccion.Local), strconv.Itoa(element.Prediccion.Visitante), cliente, evento, punto)
 					}
 
 					Actualizar_Jornada(idJornada)
@@ -568,7 +607,7 @@ func ingrrsar_Membresia_Temp(cliente string, membresia string, temporada string)
 	}
 }
 
-func ingresar_Prediccion(prediccionL string, prediccionV string, cliente string, evento string) {
+func ingresar_Prediccion(prediccionL string, prediccionV string, cliente string, evento string, obtenido string) {
 	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
 	if err != nil {
 		fmt.Println(err)
@@ -577,8 +616,8 @@ func ingresar_Prediccion(prediccionL string, prediccionV string, cliente string,
 
 	defer db.Close()
 
-	rows, err := db.Exec(`CALL Ingresar_Prediccion(:1, :2, :3, :4)`,
-		prediccionL, prediccionV, cliente, evento)
+	rows, err := db.Exec(`CALL Ingresar_Prediccion(:1, :2, :3, :4, :5)`,
+		prediccionL, prediccionV, cliente, evento, obtenido)
 
 	if err != nil {
 		fmt.Println("ingresar prediccion")
