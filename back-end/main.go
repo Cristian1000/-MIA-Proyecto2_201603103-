@@ -281,6 +281,93 @@ func Tabla_TU(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Tabal_Temporada(nuevoTu.Id_cliente, nuevoTu.Id_tempo))
 }
 
+func Crear_Usuario(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevoRegistro Registro_Usuario
+	json.NewDecoder(r.Body).Decode(&nuevoRegistro)
+	fmt.Println(nuevoRegistro)
+	nuevoRegistro.Id = Registro(nuevoRegistro.Nombre, nuevoRegistro.Apellido, nuevoRegistro.Pass, nuevoRegistro.Usuario, nuevoRegistro.Fecha, nuevoRegistro.Correo)
+
+	json.NewEncoder(w).Encode(nuevoRegistro.Id)
+}
+
+type Compra_M struct {
+	IdC string `json:"idC"`
+	IdM string `json:"idM"`
+	IdT string `json:"idT"`
+}
+
+func Compra_Mem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevaMembresia Compra_M
+	json.NewDecoder(r.Body).Decode(&nuevaMembresia)
+	json.NewEncoder(w).Encode(Comprar_Membresia(nuevaMembresia.IdC, nuevaMembresia.IdM, nuevaMembresia.IdT))
+}
+
+func Membresia(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Membresias())
+}
+
+func Membresia_Actual(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevaMembresia Compra_M
+	json.NewDecoder(r.Body).Decode(&nuevaMembresia)
+	json.NewEncoder(w).Encode(Mem_Tempo(nuevaMembresia.IdC, nuevaMembresia.IdT))
+}
+
+func Agregar_Dep(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevo Deporte
+	json.NewDecoder(r.Body).Decode(&nuevo)
+	ingresar_Deporte(nuevo.Nombre)
+}
+
+func Modificar_Dep(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevo Deporte
+	json.NewDecoder(r.Body).Decode(&nuevo)
+	fmt.Println(nuevo)
+	Modificar_Deporte(nuevo.Id, nuevo.Nombre)
+}
+
+func Eliminar_Dep(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevo Deporte
+	json.NewDecoder(r.Body).Decode(&nuevo)
+
+	fmt.Println(nuevo)
+	Eliminar_Deporte(nuevo.Id)
+}
+
+func Enviar_Deporte(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Deportes())
+}
+
+func Enviar_Jornada(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Jornadas())
+}
+
+func Enviar_Fase(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Estados())
+}
+
+type Fase struct {
+	IdJ string `json:"idJ"`
+	IdF string `json:"idF"`
+}
+
+func Modificar_Fase(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var nuevo Fase
+	json.NewDecoder(r.Body).Decode(&nuevo)
+
+	Modificar_Estado(nuevo.IdJ, nuevo.IdF)
+}
+
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
 
@@ -298,6 +385,17 @@ func main() {
 	router.HandleFunc("/Usuarios", Retornar_Usuario).Methods("GET")
 	router.HandleFunc("/Temporadas", retornar_Tempo).Methods("GET")
 	router.HandleFunc("/TemporadaUsuario", Tabla_TU).Methods("POST")
+	router.HandleFunc("/CrearUsuario", Crear_Usuario).Methods("POST")
+	router.HandleFunc("/Membresia", Membresia).Methods("GET")
+	router.HandleFunc("/CompraMembresia", Compra_Mem).Methods("POST")
+	router.HandleFunc("/MembresiaActual", Membresia_Actual).Methods("POST")
+	router.HandleFunc("/Deportes", Enviar_Deporte).Methods("GET")
+	router.HandleFunc("/AgregarDeporte", Agregar_Dep).Methods("POST")
+	router.HandleFunc("/ModificarDeporte", Modificar_Dep).Methods("POST")
+	router.HandleFunc("/EliminarDeporte", Eliminar_Dep).Methods("POST")
+	router.HandleFunc("/Jornadas", Enviar_Jornada).Methods("GET")
+	router.HandleFunc("/Fase", Enviar_Fase).Methods("GET")
+	router.HandleFunc("/ModificarFase", Modificar_Fase).Methods("POST")
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":3003", handler))
@@ -1305,4 +1403,312 @@ func Tabal_Temporada(idC string, idT string) (consulta Contenedor_TU) {
 	}
 
 	return contenedor
+}
+
+type Registro_Usuario struct {
+	Id       string `json:"id"`
+	Nombre   string `json:"nombre"`
+	Apellido string `json:"aellido"`
+	Pass     string `json:"pass"`
+	Usuario  string `json:"usuario"`
+	Fecha    string `json:"fecha"`
+	Correo   string `json:"correo"`
+}
+
+func Registro(nombre string, apellido string, pass string, usu string, fecha string, correo string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	var salida string
+	rows, err := db.Exec(`CALL Crear_Usuario(:1, :2, :3, :4, :5, :6, :7)`,
+		sql.Out{Dest: &salida}, nombre, apellido, pass, usu, fecha, correo)
+
+	if err != nil {
+		fmt.Println("Registro")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
+	return salida
+}
+
+func Comprar_Membresia(idC string, idM string, idT string) (consulta string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	var salida string
+	rows, err := db.Exec(`CALL Membresia_T(:1, :2, :3, :4)`,
+		sql.Out{Dest: &salida}, idC, idM, idT)
+
+	if err != nil {
+		fmt.Println("Registro")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
+	return salida
+}
+
+type Tier struct {
+	Id     string `json:"id"`
+	Nombre string `json:"nombre"`
+}
+
+type Contenedor_Tier struct {
+	Datos []Tier `json:"datos"`
+}
+
+func Membresias() (consulta Contenedor_Tier) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query("SELECT ID, NOMBRE FROM MEMBRESIA")
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var temporadas Contenedor_Tier
+	var id int
+	var nombre string
+	for rows.Next() {
+		var tempo Tier
+		rows.Scan(&id, &nombre)
+		tempo.Id = strconv.Itoa(id)
+		tempo.Nombre = nombre
+		temporadas.Datos = append(temporadas.Datos, tempo)
+	}
+
+	return temporadas
+}
+
+type Mem_ac struct {
+	Id string `json:"id"`
+}
+
+func Mem_Tempo(idC string, idT string) (consulta Mem_ac) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT ID_MEMBRESIA FROM MEMBRESIA_TEMPORADA where ID_CLIENTE = :1 and ID_TEMPORADA = :2`,
+		idC, idT)
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var id string
+	for rows.Next() {
+		rows.Scan(&id)
+		consulta.Id = id
+	}
+
+	return consulta
+}
+
+type Deporte struct {
+	Id     string `json:"id"`
+	Nombre string `json:"nombre"`
+}
+
+type Contenedor_Deporte struct {
+	Deportes []Deporte `json:"deporte"`
+}
+
+func Deportes() (consulta Contenedor_Deporte) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query("SELECT ID, NOMBRE FROM Deporte")
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x int
+	var id string
+	var contenedor Contenedor_Deporte
+	for rows.Next() {
+		var nuevo Deporte
+		rows.Scan(&x, &id)
+		nuevo.Id = strconv.Itoa((x))
+		nuevo.Nombre = id
+		contenedor.Deportes = append(contenedor.Deportes, nuevo)
+	}
+
+	return contenedor
+}
+
+func Modificar_Deporte(id string, nombre string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	rows, err := db.Exec(`CALL Actualiza_Deporte(:1, :2)`,
+		id, nombre)
+
+	if err != nil {
+		fmt.Println("Actualizar")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
+}
+
+func Eliminar_Deporte(id string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	rows, err := db.Exec(`CALL Eliminar_Deporte(:1)`,
+		id)
+
+	if err != nil {
+		fmt.Println("Actualizar")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
+}
+
+type Jor struct {
+	Id     string `json:"id"`
+	Nombre string `Json:"nombre"`
+	Estado string `json:"estado"`
+}
+
+type Contenedor_Jornada struct {
+	Jornada []Jor `json:"jornada"`
+}
+
+func Jornadas() (consulta Contenedor_Jornada) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query("SELECT Jornada.ID, Jornada.NOMBRE, FASE.NOMBRE FROM Jornada, Fase where Jornada.id_fase = FASE.id")
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x int
+	var id string
+	var nombre string
+	var contenedor Contenedor_Jornada
+	for rows.Next() {
+		var nuevo Jor
+		rows.Scan(&x, &id, &nombre)
+		nuevo.Id = strconv.Itoa((x))
+		nuevo.Nombre = id
+		nuevo.Estado = nombre
+		contenedor.Jornada = append(contenedor.Jornada, nuevo)
+	}
+
+	return contenedor
+}
+
+type Estado struct {
+	Id     string `json:"id"`
+	Nombre string `json:"nombre"`
+}
+
+type Contenedor_Estado struct {
+	Estados []Estado `json:"estado"`
+}
+
+func Estados() (consulta Contenedor_Estado) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, nombre from Fase")
+
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	var x int
+	var id string
+	var contenedor Contenedor_Estado
+	for rows.Next() {
+		var nuevo Estado
+		rows.Scan(&x, &id)
+		nuevo.Id = strconv.Itoa((x))
+		nuevo.Nombre = id
+		contenedor.Estados = append(contenedor.Estados, nuevo)
+	}
+
+	return contenedor
+}
+
+func Modificar_Estado(idJ string, idF string) {
+	db, err := sql.Open("godror", "cris/1234@localhost:1521/ORCL18")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer db.Close()
+	rows, err := db.Exec(`CALL Estado_Jornada(:1, :2)`,
+		idJ, idF)
+
+	if err != nil {
+		fmt.Println("Actualizar")
+		fmt.Println(rows)
+		fmt.Println(err)
+		return
+	}
 }

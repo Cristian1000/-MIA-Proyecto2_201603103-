@@ -192,11 +192,59 @@ BEGIN
         SELECT to_char(ID) into resultado FROM CLIENTE where USUARIO = usu and PASSWORD = pass;
 END;
 
+create or REPLACE PROCEDURE Crear_Usuario(resultado OUT VARCHAR2, nombreE in VARCHAR2, apelllidoE in VARCHAR2, pass in VARCHAR2, usu in VARCHAR2, fechaN in VARCHAR2, correoE in VARCHAR2)
+IS
+sistema date;
+BEGIN
+        select to_date(to_char(systimestamp, 'YYYY-MM-DD HH24:MI'), 'YYYY-MM-DD HH24:MI') into sistema from dual;
+        INSERT into CLIENTE(NOMBRE, APELLIDO, PASSWORD, USUARIO, FECHA_NACIMIENTO, FECHA_REGISTRO, CORREO)
+        VALUES(nombreE, apelllidoE, pass, usu, to_date(fechaN, 'YYYY-MM-DD HH24:MI'), sistema,correoE);
+        SELECT to_char(ID) INTO resultado FROM CLIENTE where USUARIO = usu;
+END;
+
+create or REPLACE PROCEDURE Membresia_T(resultado OUT VARCHAR2, idC in INTEGER, idM in INTEGER, idT in INTEGER)
+IS
+existe INTEGER:=0;
+BEGIN
+        SELECT COUNT(*) into existe from MEMBRESIA_TEMPORADA where ID_CLIENTE = idC and ID_MEMBRESIA = idM and ID_TEMPORADA = idT;
+        if existe < 1 THEN
+                INSERT INTO MEMBRESIA_TEMPORADA(ID_CLIENTE, ID_MEMBRESIA, ID_TEMPORADA)
+                VALUES(idC, idM, idT);
+                resultado := 'Membresia Comprada';
+        ELSE
+                resultado := 'No puede cambiar su Membresia';
+        end if;
+END;
+
+create or REPLACE PROCEDURE Actualiza_Deporte(idE in INTEGER, nom in VARCHAR2)
+IS
+BEGIN
+        UPDATE deporte SET
+        nombre = nom
+        where id = idE;
+END;
+
+create or REPLACE PROCEDURE Eliminar_Deporte(idE in INTEGER)
+IS
+BEGIN
+        DELETE FROM DEPORTE WHERE DEPORTE.ID = idE;
+END;
+
+create or REPLACE PROCEDURE Estado_Jornada(idJ in INTEGER, idF in INTEGER)
+IS
+BEGIN
+        UPDATE JORNADA SET
+        ID_FASE = idF
+        where id = idJ;
+END;
+
+SELECT * from DEPORTE WHERE DEPORTE.ID = 83
+
 select Deporte.NOMBRE, Evento.NOMBRE_LOCAL, EVENTO.NOMBRE_VISITANTE, PREDICCION.PUNTOD_LOCAL, PREDICCION.PUNTOS_VISITANTE, EVENTO.R_LOCAL, EVENTO.R_VISITANTE, PREDICCION.PUNTOS_OBTENIDOS, to_char(EVENTO.FECHA, 'YYYY-MM-DD HH24:MI')
 from Deporte, Cliente, Evento, Temporada, Jornada, Prediccion
 WHERE TEMPORADA.ID = JORNADA.ID_TEMPORADA and EVENTO.ID_JORNADA = JORNADA.ID and DEPORTE.ID = EVENTO.ID_DEPORTE and EVENTO.ID = PREDICCION.ID_EVENTO and CLIENTE.ID = PREDICCION.ID_CLIENTE and CLIENTE.ID = 1 and TEMPORADA.ID = 41
 
-SELECT * FROM TEMPORADA
+SELECT ID_MEMBRESIA FROM MEMBRESIA_TEMPORADA where ID_CLIENTE = :1 and ID_TEMPORADA = :2
 
 SELECT ID, NOMBRE_LOCAL, NOMBRE_VISITANTE, TO_CHAR(FECHA,'YYYY-MM-DD HH24:MI'), R_LOCAL, R_VISITANTE FROM EVENTO
 

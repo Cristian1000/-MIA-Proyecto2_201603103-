@@ -28,6 +28,10 @@ class login extends Component{
  }
 
     iniciarSesion=()=>{
+      if (this.state.from.contrasena == "admin" && this.state.from.usua == "admin") {
+          window.location.href="./Admin";
+      }else{
+
       var inicio ={
         usuario:this.state.from.usua,
         pass:this.state.from.contrasena
@@ -36,7 +40,7 @@ class login extends Component{
       axios.post("http://localhost:3003/InicioSesion", JSON.stringify(inicio))
       .then(response=>{
           if(response.data.id != ""){
-              console.log(response.data.id)
+              console.log(response.data)
               cookies.set('id', response.data.id, {path: "/"});
               alert(`Bienvenido`);
               window.location.href="./Usuario";
@@ -47,7 +51,11 @@ class login extends Component{
       .catch(error=>{
           console.log(error);
       })
+    }
+  }
 
+  regristrar = () =>{
+    window.location.href ="/Registro"
   }
 
   componentDidMount() {
@@ -80,6 +88,9 @@ class login extends Component{
             />
             <br />
             <button className="btn btn-primary" onClick={this.iniciarSesion}>Iniciar Sesión</button>
+            <br />
+            <br />
+            <button className="btn btn-primary" onClick={this.regristrar}>Registro</button>
           </div>
         </div>
       </div>

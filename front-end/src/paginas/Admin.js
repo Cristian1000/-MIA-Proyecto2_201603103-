@@ -74,6 +74,25 @@ export default class Admin extends Component {
         console.log(this.state.Temporada);
     }
 
+    Carga_Masiva = () =>{
+        window.location.href ="/CargaMasiva"
+      }
+
+    Temporada = () =>{
+        window.location.href ="/Temporada"
+      }
+
+      salir = ()=>{
+        window.location.href ="/"
+      }
+      Deporte = ()=>{
+        window.location.href ="/Deporte"
+      }
+
+      Jornada = () =>{
+        window.location.href ="/Jornada"
+      }
+
     render() {
 
         return (
@@ -87,22 +106,22 @@ export default class Admin extends Component {
                     <div className="collapse navbar-collapse" id="navbarNav">
                         <ul className="navbar-nav">
                         <li className="nav-item active">
-                            <a className="nav-link" href="#">Carga Masiva <span className="sr-only">(current)</span></a>
+                            <a className="nav-link" onClick={this.Carga_Masiva} >Carga Masiva <span className="sr-only">(current)</span></a>
                         </li>
                         <li className="nav-item active">
-                            <a className="nav-link" href="#"  >Jornada </a>
+                            <a className="nav-link" onClick={this.Jornada}>Jornada </a>
                         </li>
                         <li className="nav-item active">
-                            <a className="nav-link" href="#">Temporada </a>
+                            <a className="nav-link" onClick={this.Temporada}>Temporada </a>
                         </li>
                         <li className="nav-item active">
                             <a className="nav-link " href="#">Recompensas </a>
                         </li>
                         <li className="nav-item active">
-                            <a className="nav-link " href="#">Deportes </a>
+                            <a className="nav-link " onClick={this.Deporte} >Deportes </a>
                         </li>
                         <li className="nav-item active">
-                            <a className="nav-link " href="https://www.google.com/">Reportes </a>
+                            <a className="nav-link " onClick={this.salir}>Salir </a>
                         </li>
                         </ul>
                     </div>
